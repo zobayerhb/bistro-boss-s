@@ -25,10 +25,18 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const bistroCollection = client.db("bistroDB").collection("menu");
+    const bistroMenuCollection = client.db("bistroDB").collection("menu");
+    const bistroReviewCollection = client.db("bistroDB").collection("reviews");
 
+    // get menu data
     app.get("/menu", async (req, res) => {
-      const filter = await bistroCollection.find().toArray();
+      const filter = await bistroMenuCollection.find().toArray();
+      res.send(filter);
+    });
+
+    // get review data
+    app.get("/reviews", async (req, res) => {
+      const filter = await bistroReviewCollection.find().toArray();
       res.send(filter);
     });
 

@@ -66,8 +66,14 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    });
 
-    // carts collection
+    // ========== carts collection ============
     // add to cart data POST api create
     app.get("/carts", async (req, res) => {
       const email = req.query.email;

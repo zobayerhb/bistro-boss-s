@@ -42,6 +42,14 @@ async function run() {
       res.send(filter);
     });
 
+    // ============ ALL USER DATA API ============
+
+    // all user data get
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
     // user data save to database
     app.post("/user", async (req, res) => {
       const user = req.body;

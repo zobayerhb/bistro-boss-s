@@ -3,7 +3,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const cookeiParser = require("cookie-parser");
+const cookieParser = require("cookie-parser");
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
@@ -15,7 +15,24 @@ const corsOptions = {
 // middleware
 app.use(express.json());
 app.use(cors(corsOptions));
-app.use(cookeiParser());
+app.use(cookieParser());
+
+// JWT VERIFY MIDDLEWARE
+const verifyToken = (req, res, next) => {
+  const token = req.cookies?.token;
+  console.log(token);
+  if (!token) {
+    return res.status(401).send({ message: "Unathorized: No Token Provided" });
+  }
+
+  // verify token
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decode) => {
+    if (error) {
+      return res.status(403).send({ message: "Forviden: Invalid Token" });
+    }
+    next();
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.vpupb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -42,7 +59,7 @@ async function run() {
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "2d",
+        expiresIn: "1d",
       });
       res
         .cookie("token", token, {
@@ -50,6 +67,7 @@ async function run() {
           secure: false, // use true in production with HTTPS
         })
         .send({ message: true });
+      // console.log("token sent to cookie ------> ", token);
     });
     // jwt logout api
     app.post("/jwt-logout", async (req, res) => {
@@ -57,6 +75,7 @@ async function run() {
         .clearCookie("token", {
           httpOnly: true,
           secure: false,
+          sameSite: "Strict",
         })
         .send({ message: "true" });
     });
@@ -76,7 +95,8 @@ async function run() {
     // ============ ALL USER DATA API ============
 
     // all user data get
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
+      // console.log("token---->", req.cookies?.token);
       const result = await usersCollection.find().toArray();
       res.send(result);
     });

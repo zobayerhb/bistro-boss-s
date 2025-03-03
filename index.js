@@ -26,10 +26,11 @@ const verifyToken = (req, res, next) => {
   }
 
   // verify token
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decode) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
     if (error) {
       return res.status(403).send({ message: "Forviden: Invalid Token" });
     }
+    req.decoded = decoded;
     next();
   });
 };
@@ -59,7 +60,7 @@ async function run() {
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1d",
+        expiresIn: "20d",
       });
       res
         .cookie("token", token, {
@@ -119,6 +120,20 @@ async function run() {
     });
 
     // =========== MAKE ADMIN API ===========
+    app.get("/users/admin/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "unauthorized access" });
+      }
+
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      let admin = false;
+      if (user) {
+        admin = user?.role === "admin";
+      }
+      res.send({ admin });
+    });
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };

@@ -56,6 +56,18 @@ async function run() {
     const bistroReviewCollection = client.db("bistroDB").collection("reviews");
     const cartsCollection = client.db("bistroDB").collection("carts");
 
+    // verify admin usign with middleware
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      next();
+    };
+
     // ========== JWT =========
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -96,7 +108,7 @@ async function run() {
     // ============ ALL USER DATA API ============
 
     // all user data get
-    app.get("/users", verifyToken, async (req, res) => {
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       // console.log("token---->", req.cookies?.token);
       const result = await usersCollection.find().toArray();
       res.send(result);

@@ -8,8 +8,9 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const corsOptions = {
-  origin: "http://localhost:5173", // Your frontend URL
+  origin: ["http://localhost:5173"], // Your frontend URL
   credentials: true, // Allow credentials (cookies)
+  optionSuccessStatus: 200,
 };
 
 // middleware
@@ -20,7 +21,7 @@ app.use(cookieParser());
 // JWT VERIFY MIDDLEWARE
 const verifyToken = (req, res, next) => {
   const token = req.cookies?.token;
-  console.log(token);
+  // console.log(token);
   if (!token) {
     return res.status(401).send({ message: "Unathorized: No Token Provided" });
   }
@@ -97,6 +98,11 @@ async function run() {
     app.get("/menu", async (req, res) => {
       const filter = await bistroMenuCollection.find().toArray();
       res.send(filter);
+    });
+    app.post("/menu", verifyToken, verifyAdmin, async (req, res) => {
+      const item = req.body;
+      const result = await bistroMenuCollection.insertOne(item);
+      res.send(result);
     });
 
     // get review data

@@ -104,6 +104,12 @@ async function run() {
       const result = await bistroMenuCollection.insertOne(item);
       res.send(result);
     });
+    app.delete("/menu/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bistroMenuCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // get review data
     app.get("/reviews", async (req, res) => {

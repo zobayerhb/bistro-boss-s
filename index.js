@@ -99,6 +99,14 @@ async function run() {
       const filter = await bistroMenuCollection.find().toArray();
       res.send(filter);
     });
+    app.get("/menu/:id", async (req, res) => {
+      const {id} = req.params
+      console.log("received id:", id);
+      const query = { _id: id };
+      const result = await bistroMenuCollection.findOne(query);
+      console.log("query result", result);
+      res.send(result);
+    });
     app.post("/menu", verifyToken, verifyAdmin, async (req, res) => {
       const item = req.body;
       const result = await bistroMenuCollection.insertOne(item);

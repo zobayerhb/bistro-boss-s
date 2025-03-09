@@ -100,7 +100,7 @@ async function run() {
       res.send(filter);
     });
     app.get("/menu/:id", async (req, res) => {
-      const {id} = req.params
+      const { id } = req.params;
       console.log("received id:", id);
       const query = { _id: id };
       const result = await bistroMenuCollection.findOne(query);
@@ -110,6 +110,22 @@ async function run() {
     app.post("/menu", verifyToken, verifyAdmin, async (req, res) => {
       const item = req.body;
       const result = await bistroMenuCollection.insertOne(item);
+      res.send(result);
+    });
+    app.patch("/menu/:id", async (req, res) => {
+      const { id } = req.params;
+      const item = req.body;
+      const filter = { _id: id };
+      const updateDoc = {
+        $set: {
+          name: item.name,
+          recipe: item.recipe,
+          category: item.category,
+          price: item.price,
+          image: item.image,
+        },
+      };
+      const result = await bistroMenuCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
     app.delete("/menu/:id", verifyToken, verifyAdmin, async (req, res) => {

@@ -57,6 +57,7 @@ async function run() {
     const bistroMenuCollection = client.db("bistroDB").collection("menu");
     const bistroReviewCollection = client.db("bistroDB").collection("reviews");
     const cartsCollection = client.db("bistroDB").collection("carts");
+    const paymentsCollection = client.db("bistroDB").collection("payments");
 
     // verify admin usign with middleware
     const verifyAdmin = async (req, res, next) => {
@@ -223,11 +224,12 @@ async function run() {
     });
 
     // ============ STRIPE PAYMENT METHOD INTREGATE ==============
-    app.post("create-payment-intent", async (req, res) => {
-      const { item } = req.body;
-      const amount = parseInt(item * 100);
+    app.post("/create-payment-intent", async (req, res) => {
+      console.log(req.body.item);
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
       const paymentIntent = await stripe.paymentIntents.create({
-        amount,
+        amount: amount,
         currency: "usd",
         payment_method_types: ["card"],
       });
@@ -235,6 +237,18 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
+    });
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const paymentRes = await paymentsCollection.insertOne(payment);
+
+      const query = {
+        _id: {
+          $in: payment.cartIds.map((id) => new ObjectId(id)),
+        },
+      };
+      const deleteResult = await cartsCollection.deleteMany(query);
+      res.send({ paymentRes, deleteResult });
     });
 
     // Send a ping to confirm a successful connection
